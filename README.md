@@ -35,7 +35,7 @@ A simple web application that extracts key information from text using OpenAI's 
 
 1. **Build and run with Docker**
    ```bash
-   docker-compose up --build
+   docker-compose up --build -d
    ```
    The application will be available at `http://localhost:8000`
 
@@ -98,6 +98,14 @@ curl -X POST "http://localhost:8000/analyze" \
 
 1. **FastAPI**: Chosen for its performance, automatic request validation, and OpenAPI documentation.
 2. **spaCy**: Used for efficient NLP tasks like part-of-speech tagging to extract nouns.
+
+## Screenshots
+
+### Homepage
+![Homepage](./docs/screenshots/Screenshot%202025-09-08%20at%2016.02.54.png)
+
+### Analysis Results
+![Analysis Results](./docs/screenshots/Screenshot%202025-09-08%20at%2016.03.04.png)
 3. **OpenAI GPT-3.5**: Provides high-quality text summarization and metadata extraction.
 4. **Tailwind CSS**: Used for rapid UI development with a clean, responsive design.
 
