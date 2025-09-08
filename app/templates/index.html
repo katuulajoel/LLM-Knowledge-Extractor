@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Knowledge Extractor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">LLM Knowledge Extractor</h1>
+            <p class="text-gray-600 mt-2">Paste your text below to extract key information</p>
+        </header>
+
+        <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+            <form id="analyzeForm" class="space-y-4">
+                <div>
+                    <label for="text" class="block text-sm font-medium text-gray-700 mb-1">Enter your text</label>
+                    <textarea id="text" name="text" rows="10" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Paste your article, blog post, or any text here..."></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Analyze Text
+                    </button>
+                </div>
+            </form>
+
+            <div id="loading" class="loading mt-8 text-center">
+                <div class="spinner mx-auto mb-2"></div>
+                <p class="text-gray-600">Analyzing your text...</p>
+            </div>
+
+            <div id="results" class="mt-8 space-y-6 hidden">
+                <div class="border-b pb-4">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">Summary</h2>
+                    <p id="summary" class="text-gray-700"></p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-gray-800 mb-2">Metadata</h3>
+                        <div class="space-y-2">
+                            <p><span class="font-medium">Title:</span> <span id="title" class="text-gray-700"></span></p>
+                            <p><span class="font-medium">Sentiment:</span> <span id="sentiment" class="capitalize"></span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-gray-800 mb-2">Topics</h3>
+                        <div id="topics" class="flex flex-wrap gap-2">
+                            <!-- Topics will be added here -->
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-gray-800 mb-2">Keywords</h3>
+                        <div id="keywords" class="flex flex-wrap gap-2">
+                            <!-- Keywords will be added here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <h3 class="font-medium text-blue-800 mb-2">Raw JSON</h3>
+                    <pre id="rawJson" class="bg-white p-3 rounded text-sm overflow-auto max-h-40"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('analyzeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const text = document.getElementById('text').value.trim();
+            if (!text) return;
+            
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            // Show loading, hide results with animation
+            loading.classList.add('show');
+            results.classList.add('hidden');
+            
+            // Clear previous results
+            document.getElementById('summary').textContent = '';
+            document.getElementById('title').textContent = '';
+            document.getElementById('topics').innerHTML = '';
+            document.getElementById('keywords').innerHTML = '';
+            document.getElementById('rawJson').textContent = '';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update the UI with the results
+                document.getElementById('summary').textContent = data.summary;
+                document.getElementById('title').textContent = data.metadata.title || 'N/A';
+                
+                // Update sentiment with appropriate styling
+                const sentimentEl = document.getElementById('sentiment');
+                const sentiment = data.metadata.sentiment.toLowerCase();
+                sentimentEl.textContent = sentiment;
+                
+                // Remove all sentiment classes first
+                sentimentEl.classList.remove('positive', 'neutral', 'negative');
+                
+                // Add the appropriate sentiment class
+                if (sentiment.includes('positive')) {
+                    sentimentEl.classList.add('positive');
+                } else if (sentiment.includes('negative')) {
+                    sentimentEl.classList.add('negative');
+                } else {
+                    sentimentEl.classList.add('neutral');
+                }
+                
+                // Update topics
+                const topicsContainer = document.getElementById('topics');
+                topicsContainer.innerHTML = '';
+                data.metadata.topics.forEach(topic => {
+                    const topicEl = document.createElement('span');
+                    topicEl.className = 'px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full';
+                    topicEl.textContent = topic;
+                    topicsContainer.appendChild(topicEl);
+                });
+                
+                // Update keywords
+                const keywordsContainer = document.getElementById('keywords');
+                keywordsContainer.innerHTML = '';
+                data.metadata.keywords.forEach(keyword => {
+                    const keywordEl = document.createElement('span');
+                    keywordEl.className = 'px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full';
+                    keywordEl.textContent = keyword;
+                    keywordsContainer.appendChild(keywordEl);
+                });
+                
+                // Show raw JSON
+                document.getElementById('rawJson').textContent = JSON.stringify(data, null, 2);
+                
+                // Show results, hide loading with animation
+                results.classList.remove('hidden');
+                loading.classList.remove('show');
+                
+                // Add animation class to results
+                results.style.animation = 'fadeIn 0.5s ease-in-out';
+                
+                // Scroll to results
+                results.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while analyzing the text. Please try again.');
+                loading.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,12 +1,14 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from typing import Dict, Any
 import os
 import spacy
 import openai
 import json
 from dotenv import load_dotenv
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 # Load environment variables
 load_dotenv()
@@ -26,6 +28,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+# Initialize templates
+templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+templates = Jinja2Templates(directory=templates_dir)
 
 # Load spaCy model for NLP
 try:
@@ -47,13 +57,9 @@ class TextAnalysis(BaseModel):
     text: str
 
 # Root endpoint
-@app.get("/")
-async def root():
-    return {
-        "message": "Welcome to LLM Knowledge Extractor!",
-        "version": "0.1.0",
-        "docs": "/docs"
-    }
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/analyze")
 async def analyze_text(analysis: TextAnalysis):
