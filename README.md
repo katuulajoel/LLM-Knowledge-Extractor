@@ -1,72 +1,115 @@
 # LLM Knowledge Extractor
 
-A FastAPI-based application for extracting and analyzing knowledge from text using LLMs and NLP techniques.
+A simple web application that extracts key information from text using OpenAI's GPT-3.5 and spaCy for natural language processing.
 
 ## Features
 
-- Text analysis with OpenAI
-- Topic extraction
-- Sentiment analysis
-- Keyword extraction using spaCy
-- RESTful API endpoints
-- Modern web interface
+- Extracts a 1-2 sentence summary from input text
+- Identifies key topics and sentiment
+- Extracts most frequent nouns as keywords
+- Clean, responsive web interface
+- Simple REST API endpoint
 
-## Prerequisites
+## Setup
 
-- Python 3.9+
+### Prerequisites
+- Python 3.8 or higher
 - pip (Python package manager)
+- [OpenAI API key](https://platform.openai.com/account/api-keys)
 
-## Installation
+### Quick Start
 
-1. Clone the repository:
+1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/llm-knowledge-extractor.git
-   cd llm-knowledge-extractor
+   git clone git@github.com:katuulajoel/LLM-Knowledge-Extractor.git
+   cd "LLM Knowledge Extractor"
    ```
 
-2. Create and activate a virtual environment (recommended):
+2. **Set up environment variables**
+   Create a `.env` file in the project root with your OpenAI API key:
+   ```
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+### Using Docker
+
+1. **Build and run with Docker**
+   ```bash
+   docker-compose up --build
+   ```
+   The application will be available at `http://localhost:8000`
+
+### Local Development
+
+1. **Create and activate virtual environment**
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-   ```
-
-3. Install dependencies:
-   ```bash
+   
+   # Install dependencies
    pip install -r requirements.txt
+   
+   # Download spaCy model
+   python -m spacy download en_core_web_sm
+   
+   # Run the application
+   uvicorn app.main:app --reload
    ```
 
-4. Set up environment variables:
-   - Copy `.env.example` to `.env`
-   - Update the environment variables in `.env` as needed
+   The application will be available at `http://localhost:8000`
 
-## Running the Application
+2. **Running Tests**
+   ```bash
+   python -m pytest tests/test_api.py -v
+   ```
 
-Start the development server:
+### API Endpoint
+
+You can also use the API directly:
+
 ```bash
-uvicorn app.main:app --reload
+curl -X POST "http://localhost:8000/analyze" \
+     -H "Content-Type: application/json" \
+     -d '{"text": "Your text here..."}'
 ```
-
-The API will be available at `http://localhost:8000`
-
-## API Documentation
-
-- Interactive API docs: [/docs](http://localhost:8000/docs)
-- Alternative API docs: [/redoc](http://localhost:8000/redoc)
 
 ## Project Structure
 
 ```
 .
-├── app/                    # Application source code
-│   ├── __init__.py
-│   ├── main.py            # FastAPI application
-│   └── config.py          # Application configuration
-├── .env                   # Environment variables
-├── .gitignore
-├── requirements.txt       # Python dependencies
-└── README.md              # This file
+├── app/
+│   ├── static/           # Static files (CSS, JS, images)
+│   │   └── styles.css    # Custom styles
+│   ├── templates/        # HTML templates
+│   │   └── index.html    # Web interface
+│   └── main.py          # FastAPI application
+├── tests/
+│   └── test_api.py      # API tests
+├── .env                 # Environment variables
+├── .gitignore          # Git ignore file
+├── Dockerfile          # Docker configuration
+├── docker-compose.yml  # Docker Compose configuration
+├── requirements.txt    # Python dependencies
+├── setup.sh           # Setup script
+└── README.md          # This file
 ```
 
-## License
+## Design Choices
 
-MIT
+1. **FastAPI**: Chosen for its performance, automatic request validation, and OpenAPI documentation.
+2. **spaCy**: Used for efficient NLP tasks like part-of-speech tagging to extract nouns.
+3. **OpenAI GPT-3.5**: Provides high-quality text summarization and metadata extraction.
+4. **Tailwind CSS**: Used for rapid UI development with a clean, responsive design.
+
+## Trade-offs
+
+1. **Error Handling**: Basic error handling is implemented, but production use would benefit from more robust error handling and logging.
+2. **Rate Limiting**: No rate limiting is implemented, which would be important for a production API.
+3. **Model Size**: Using the small spaCy model for speed; larger models might provide better accuracy.
+4. **Security**: Input validation is basic; in production, you'd want more robust input sanitization.
+
+## Future Improvements
+
+- Implement rate limiting
+- Add support for file uploads (PDF, DOCX, etc.)
+- Add more detailed analytics and visualizations
